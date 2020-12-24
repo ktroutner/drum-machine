@@ -1,0 +1,23 @@
+1 5 3 5 2 5 3 5 2 5 3 5
+172
+
+42  x   x   x   x 
+36x      xx      x
+38    x       x   
+49x               
+
+42  x   x   x   x 
+36x      xx      x
+38    x       x   
+
+42  x   x   x   x 
+36x      xx x     
+38    x       x   
+
+42  x   x  xx   x 
+36x      xx      x
+38    x       x   
+
+42  x   x  xx   x 
+36x      xx x     
+38    x       x   

@@ -1,0 +1,106 @@
+require "wxserpent"
+require "sched"
+require "debug"
+debug_stack_print = t
+require "slider"
+
+midi_status_noteon = 0x90
+MIDI_ID = midi_out_default()
+
+patterns = []    //stores patterns to be played
+sequence = ""    //order in which patterns will be played
+tempo = 0
+player_id = 0    //used for starting/stopping
+
+def midi_note_on(midi, chan, key, loud)
+    chan = chan & 15
+    midi_write(midi, 0, chr(midi_status_noteon + chan) + chr(key) + chr(loud))
+
+//for details on the format of the beat file, see README.txt
+def parse_file(filename)
+    f = open(filename, "r")
+    if (f == nil)
+        print "Could not open file "; filename
+        exit()
+    print "loading file..."
+    sequence = f.readline()
+    sequence = subseq(sequence, 0, len(sequence)-1)
+    tempo = int(f.readline())
+    pattern_num = -1
+    num_eighths = 0
+    line = f.readline()
+    while (line != nil)
+        if line == "\n"
+            pattern_num  = pattern_num + 1
+            patterns.append([])
+            line = f.readline()
+            num_eighths = len(line)-2
+            for i=1 to num_eighths
+                patterns[pattern_num].append([])
+        note = int(subseq(line, 0, 2))
+        for i=2 to num_eighths+1
+            if (subseq(line, i, i+1)) == "x"
+                notes = patterns[pattern_num]
+                notes[i-2].append(note)
+        line = f.readline()
+    f.close()
+    print "file successfully loaded!"
+    return
+
+def timer_callback():
+    rtsched.poll(time_get())
+    
+def sched_poll():
+    nil
+
+//play the current notes, schedule them to be turned off, and schedule
+//notes for next beat
+def drum(id, i, n)
+    if id != player_id
+        return
+    p = int(subseq(sequence, i, i+1)) - 1
+    notes = patterns[p]
+    for note in notes[n]
+        midi_note_on(mo, 9, note, 100)
+        sched_cause(intrvl_sec, nil, 'midi_note_on', mo, 9, note, 0)
+    if n == len(notes)-1
+        if i < len(sequence)-1
+            sched_cause(intrvl_sec, nil, 'drum', player_id, i+2, 0)
+        else
+            return  //nothing more to do
+    else
+        sched_cause(intrvl_sec, nil, 'drum', player_id, i, n+1)
+
+def set_tempo(obj, x)
+    #vtsched.start_use()
+    vtsched.set_bps(x/60.0)
+    #vtsched.finish_use()
+
+def stop(rest ignore)
+    player_id = player_id + 1
+Button(0, "Stop", 5, 5, 50, 20).method = 'stop'
+
+filename = wxs_file_selector("Please specify a beat file to load:", "", "", ".txt", "*.*", WXS_FILE_HIDE_READONLY, 0) 
+//print "Please specify a beat file to load:"
+//filename = str(stdin.readvalue())
+parse_file(filename)
+//print "Please give a tempo (beats/minute):"
+//tempo = int(stdin.readvalue())
+
+tempo_slider = Labeled_slider(0, "Tempo", 5, 30, 250, 20,
+                                70, 10, 300, tempo, 'linear')
+tempo_slider.method = 'set_tempo'
+
+mo = midi_create()
+result = midi_open_output(mo, MIDI_ID, 100, 0)
+if (result != 0)
+    print "midi_open_returns "; result
+    return
+
+intrvl_sec = 60.0/tempo
+
+sched_init()
+rtsched.time_offset = time_get()
+vtsched.set_bps(tempo/60.0)
+vtsched.cause(0.2, nil, 'drum', [player_id, 0, 0])
+wxs_timer_start(2, 'timer_callback')

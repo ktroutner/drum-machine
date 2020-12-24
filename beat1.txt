@@ -1,0 +1,10 @@
+1 1 1 1 2 2 2 2
+120
+
+46xxxxxxxx
+38  x   x 
+36x   x
+
+42xxxxxxxx
+38    x
+35x x   
