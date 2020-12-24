@@ -81,11 +81,7 @@ def stop(rest ignore)
 Button(0, "Stop", 5, 5, 50, 20).method = 'stop'
 
 filename = wxs_file_selector("Please specify a beat file to load:", "", "", ".txt", "*.*", WXS_FILE_HIDE_READONLY, 0) 
-//print "Please specify a beat file to load:"
-//filename = str(stdin.readvalue())
 parse_file(filename)
-//print "Please give a tempo (beats/minute):"
-//tempo = int(stdin.readvalue())
 
 tempo_slider = Labeled_slider(0, "Tempo", 5, 30, 250, 20,
                                 70, 10, 300, tempo, 'linear')
